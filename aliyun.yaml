@@ -31,7 +31,7 @@ services:
         codeUri: ./
         timeout: 60
         customContainerConfig:
-          image: registry.cn-hangzhou.aliyuncs.com/shopconan/json2image:v1.8.0
+          image: registry.cn-hangzhou.aliyuncs.com/shopconan/json2image:latest
 #           command: '["sh","/PaddleOCR/start.sh"]'
         environmentVariables:
           testEnv: true
