@@ -1,0 +1,51 @@
+edition: 1.0.0
+name: json2image
+access: default
+
+vars:
+  region: cn-hangzhou
+  memorySize: 2048
+  service:
+    name: json2image
+    description: 'json2image 项目地址 https://github.com/wanghaisheng/json2image.git'
+
+services:
+  framework:
+    component: fc
+    props:
+      region: ${vars.region}
+      service:
+        name: ${vars.service.name}
+        description: ${vars.service.description}
+        internetAccess: true
+        role:
+          name: paddleocrrole
+          policies:
+            - AliyunContainerRegistryReadOnlyAccess
+      function:
+        name: json2image
+        description: ${vars.service.description}
+        runtime: custom-container
+        memorySize: ${vars.memorySize}
+        caPort: 80
+        codeUri: ./
+        timeout: 60
+        customContainerConfig:
+          image: registry.cn-hangzhou.aliyuncs.com/shopconan/json2image:v1.8.0
+#           command: '["sh","/PaddleOCR/start.sh"]'
+        environmentVariables:
+          testEnv: true
+      triggers:
+        - name: httpTrigger
+          type: http
+          config:
+            authType: anonymous
+            methods:
+              - GET
+              - POST
+              - PUT
+      customDomains:
+        - domainName: auto
+          protocol: HTTP
+          routeConfigs:
+            - path: /*
