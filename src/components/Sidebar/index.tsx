@@ -4,8 +4,6 @@ import Link from "next/link";
 import styled from "styled-components";
 import { CanvasDirection } from "reaflow";
 import { TiFlowMerge } from "react-icons/ti";
-import { BsList } from "react-icons/bs";
-import { MdUploadFile } from "react-icons/md";
 import { RiPatreonFill } from "react-icons/ri";
 import { CgArrowsMergeAltH, CgArrowsShrinkH } from "react-icons/cg";
 import {
@@ -20,15 +18,17 @@ import { Tooltip } from "src/components/Tooltip";
 import { ConfigActionType } from "src/reducer/reducer";
 import { useConfig } from "src/hocs/config";
 import { useRouter } from "next/router";
+import { ImportModal } from "src/containers/ImportModal";
+import { ClearModal } from "src/containers/ClearModal";
 
 const StyledSidebar = styled.div`
   display: flex;
   justify-content: space-between;
   flex-direction: column;
   align-items: center;
-  width: 36px;
+  width: fit-content;
   background: ${({ theme }) => theme.BACKGROUND_TERTIARY};
-  padding: 8px;
+  padding: 4px;
   border-right: 1px solid ${({ theme }) => theme.BACKGROUND_MODIFIER_ACCENT};
 `;
 
@@ -37,18 +37,22 @@ const StyledElement = styled.div`
   justify-content: center;
   text-align: center;
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 600;
   width: 100%;
   color: ${({ theme }) => theme.INTERACTIVE_NORMAL};
   cursor: pointer;
 
-  &:hover :is(a, svg) {
-    color: ${({ theme }) => theme.INTERACTIVE_HOVER};
+  svg {
+    padding: 8px;
+    vertical-align: middle;
   }
 
-  svg {
-    padding: 8px 0;
-    vertical-align: middle;
+  a {
+    display: flex;
+  }
+
+  &:hover :is(a, svg) {
+    color: ${({ theme }) => theme.INTERACTIVE_HOVER};
   }
 `;
 
@@ -90,14 +94,6 @@ const StyledLogo = styled.div`
   color: ${({ theme }) => theme.FULL_WHITE};
 `;
 
-const StyledImportFile = styled.label`
-  cursor: pointer;
-
-  input[type="file"] {
-    display: none;
-  }
-`;
-
 function rotateLayout(layout: CanvasDirection) {
   if (layout === "LEFT") return 90;
   if (layout === "UP") return 180;
@@ -108,17 +104,8 @@ function rotateLayout(layout: CanvasDirection) {
 export const Sidebar: React.FC = () => {
   const { json, settings, dispatch } = useConfig();
   const router = useRouter();
-  const [jsonFile, setJsonFile] = React.useState<File | null>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) setJsonFile(e.target.files?.item(0));
-  };
-
-  const handleClear = () => {
-    dispatch({ type: ConfigActionType.SET_JSON, payload: "{}" });
-    localStorage.removeItem("json");
-    toast.success(`Cleared JSON and removed from memory.`);
-  };
+  const [uploadVisible, setUploadVisible] = React.useState(false);
+  const [clearVisible, setClearVisible] = React.useState(false);
 
   const handleSave = () => {
     localStorage.setItem("json", json);
@@ -129,20 +116,6 @@ export const Sidebar: React.FC = () => {
     dispatch({ type: ConfigActionType.TOGGLE_EXPAND });
     toast(`${settings.expand ? "Collapsed" : "Expanded"} nodes.`);
   };
-
-  React.useEffect(() => {
-    if (jsonFile) {
-      const reader = new FileReader();
-
-      reader.readAsText(jsonFile, "UTF-8");
-      reader.onload = function (data) {
-        dispatch({
-          type: ConfigActionType.SET_JSON,
-          payload: data.target?.result as string,
-        });
-      };
-    }
-  }, [jsonFile, dispatch]);
 
   return (
     <StyledSidebar>
@@ -156,16 +129,8 @@ export const Sidebar: React.FC = () => {
           </StyledElement>
         </Link>
         <Tooltip title="Import File">
-          <StyledElement>
-            <StyledImportFile>
-              <input
-                key={jsonFile?.name}
-                onChange={handleFileChange}
-                type="file"
-                accept="application/JSON"
-              />
-              <AiOutlineFileAdd />
-            </StyledImportFile>
+          <StyledElement onClick={() => setUploadVisible(true)}>
+            <AiOutlineFileAdd />
           </StyledElement>
         </Tooltip>
         <Tooltip title="Rotate Layout">
@@ -184,7 +149,7 @@ export const Sidebar: React.FC = () => {
           </StyledElement>
         </Tooltip>
         <Tooltip title="Clear JSON">
-          <StyledElement onClick={handleClear}>
+          <StyledElement onClick={() => setClearVisible(true)}>
             <AiOutlineDelete />
           </StyledElement>
         </Tooltip>
@@ -217,6 +182,8 @@ export const Sidebar: React.FC = () => {
           </Link>
         </StyledElement>
       </StyledBottomWrapper>
+      <ImportModal visible={uploadVisible} setVisible={setUploadVisible} />
+      <ClearModal visible={clearVisible} setVisible={setClearVisible} />
     </StyledSidebar>
   );
 };
