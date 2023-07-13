@@ -1,18 +1,10 @@
 # Builder
-FROM node:14-buster as builder
-
+FROM node:16-alpine as builder
 WORKDIR /src
-
-COPY . /src
-
-RUN npm install --legacy-peer-deps
-
-RUN npm run build
+COPY . /src/
+RUN yarn install --frozen-lockfile && yarn build
 
 # App
-FROM nginx:alpine
-
-COPY --from=builder /src/out /app
-
-RUN rm -rf /usr/share/nginx/html \
-  && ln -s /app /usr/share/nginx/html
+FROM nginxinc/nginx-unprivileged
+COPY --chown=nginx:nginx --from=builder /src/out /app
+COPY default.conf /etc/nginx/conf.d/default.conf

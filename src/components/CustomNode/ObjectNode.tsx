@@ -1,37 +1,36 @@
 import React from "react";
-import { CustomNodeProps } from ".";
+import { CustomNodeProps } from "src/components/CustomNode";
+import { TextRenderer } from "./TextRenderer";
 import * as Styled from "./styles";
 
-const ObjectNode: React.FC<CustomNodeProps<[string, string][]>> = ({
-  width,
-  height,
-  value,
-  x,
-  y,
-}) => {
+const Node: React.FC<CustomNodeProps> = ({ node, x, y }) => {
+  const { text, width, height, data } = node;
+  if (data.isEmpty) return null;
+
   return (
-    <Styled.StyledForeignObject width={width} height={height} x={0} y={0}>
-      <Styled.StyledTextWrapper>
-        <Styled.StyledText width={width} height={height}>
-          {value.map(
-            (val, idx) =>
-              val[1] && (
-                <Styled.StyledRow
-                  data-key={val[1]}
-                  data-x={x}
-                  data-y={y}
-                  key={idx}
-                  width={width}
-                >
-                  <Styled.StyledKey objectKey>{val[0]}: </Styled.StyledKey>
-                  {val[1]}
-                </Styled.StyledRow>
-              )
-          )}
-        </Styled.StyledText>
-      </Styled.StyledTextWrapper>
+    <Styled.StyledForeignObject width={width} height={height} x={0} y={0} isObject>
+      {text.map((val, idx) => {
+        return (
+          <Styled.StyledRow
+            data-key={JSON.stringify(val)}
+            data-type={JSON.stringify(val[1])}
+            data-x={x}
+            data-y={y + idx * 17.8}
+            key={idx}
+          >
+            <Styled.StyledKey objectKey>
+              {JSON.stringify(val[0]).replaceAll('"', "")}:{" "}
+            </Styled.StyledKey>
+            <TextRenderer>{JSON.stringify(val[1])}</TextRenderer>
+          </Styled.StyledRow>
+        );
+      })}
     </Styled.StyledForeignObject>
   );
 };
 
-export default ObjectNode;
+function propsAreEqual(prev: CustomNodeProps, next: CustomNodeProps) {
+  return String(prev.node.text) === String(next.node.text) && prev.node.width === next.node.width;
+}
+
+export const ObjectNode = React.memo(Node, propsAreEqual);

@@ -1,25 +1,27 @@
-const withPWA = require("next-pwa");
+const { withSentryConfig } = require("@sentry/nextjs");
 
 /**
  * @type {import('next').NextConfig}
  */
-const nextConfig = {
-  reactStrictMode: true,
-  exportPathMap: () => ({
-    "/": { page: "/" },
-    "/editor": { page: "/editor" },
-  }),
+const config = {
+  reactStrictMode: false,
+  productionBrowserSourceMaps: true,
   compiler: {
     styledComponents: true,
   },
-  pwa: {
-    disable: process.env.NODE_ENV === "development",
-    dest: "public",
-    register: true,
-    fallbacks: {
-      document: "/editor",
-    },
-  },
 };
 
-module.exports = withPWA(nextConfig);
+module.exports = withSentryConfig(
+  config,
+  {
+    silent: true,
+    org: "aykut-sarac",
+    project: "json-crack",
+  },
+  {
+    widenClientFileUpload: true,
+    hideSourceMaps: true,
+    disableLogger: true,
+    disableServerWebpackPlugin: true,
+  }
+);

@@ -1,138 +1,330 @@
 import React from "react";
-import { Button } from "src/components/Button";
-import { Container } from "src/components/Container";
-import { Navbar } from "src/components/Navbar";
-import { Image } from "src/components/Image";
-import { AiFillGithub } from "react-icons/ai";
-import { Footer } from "src/components/Footer";
 import Head from "next/head";
-import { Producthunt } from "src/components/Producthunt";
-import { useRouter } from "next/router";
-import styled from "styled-components";
+import Link from "next/link";
+import styled, { ThemeProvider } from "styled-components";
+import {
+  Anchor,
+  Button,
+  Center,
+  Container,
+  Flex,
+  Image,
+  Group,
+  Stack,
+  Text,
+  Title,
+  Tooltip,
+} from "@mantine/core";
+import { FaChevronRight } from "react-icons/fa";
+import { SiVisualstudiocode } from "react-icons/si";
+import { Typewriter } from "react-simple-typewriter";
+import { HovercardAds } from "src/components/HovercardAds";
+import { lightTheme } from "src/constants/theme";
+import { Footer } from "src/layout/Footer";
+import { Navbar } from "src/layout/Navbar";
 
-const StyledHome = styled.div`
-  padding: 24px;
+const StyledHeroSection = styled.div`
+  --bg-color: ${({ theme }) => theme.GRID_BG_COLOR};
+  --line-color-1: ${({ theme }) => theme.GRID_COLOR_PRIMARY};
+  --line-color-2: ${({ theme }) => theme.GRID_COLOR_SECONDARY};
 
-  ::-webkit-scrollbar {
-    width: 8px;
-    background: #23272a !important;
-  }
+  background-color: var(--bg-color);
+  background-image: linear-gradient(var(--line-color-1) 1.5px, transparent 1.5px),
+    linear-gradient(90deg, var(--line-color-1) 1.5px, transparent 1.5px),
+    linear-gradient(var(--line-color-2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-color-2) 1px, transparent 1px);
+  background-position: -1.5px -1.5px, -1.5px -1.5px, -1px -1px, -1px -1px;
+  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
 
-  ::-webkit-scrollbar-thumb {
-    border-radius: 5px;
-    background-color: #4d4d4d !important;
+  @media only screen and (max-width: 1240px) {
+    flex-direction: column;
   }
 `;
 
-const StyledContent = styled.div`
-  font-size: 20px;
-  font-weight: 500;
-  color: ${({ theme }) => theme.SILVER};
-  width: 50%;
+const StyledHeroSectionBody = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10rem 10%;
+  overflow: hidden;
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  min-height: 60vh;
+
+  @media only screen and (max-width: 1200px) {
+    flex-direction: column;
+  }
+`;
+
+const StyledTitle = styled.h1`
+  font-weight: 900;
+  margin: 0;
+  font-size: 4rem;
+  color: #323232;
+  font-family: var(--mona-sans);
+  filter: drop-shadow(2px 2px 1px black);
 
   @media only screen and (max-width: 768px) {
-    width: 100%;
-    text-align: center;
+    font-size: 2.5rem;
+  }
+`;
 
-    button {
-      margin-left: auto;
-      margin-right: auto;
+const StyledGradientText = styled.span`
+  background: #ffb76b;
+  background: linear-gradient(to right, #fca74d 0%, #fda436 30%, #ff7c00 60%, #ff7f04 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+const Left = styled.div`
+  min-width: 40%;
+  z-index: 1;
+`;
+
+const Right = styled.div`
+  position: absolute;
+  transform: translate(25%, 25%);
+  width: 80%;
+  right: 0;
+  filter: blur(1px);
+  user-select: none;
+
+  @media only screen and (max-width: 600px) {
+    display: none;
+  }
+`;
+
+const StyledHighlightedText = styled.span`
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: #eab308;
+`;
+
+const StyledHeroText = styled.p`
+  font-size: 1.25rem;
+  color: #5e656b;
+  font-weight: 600;
+  max-width: 600px;
+`;
+
+const StyledStatsWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  align-items: center;
+  background: #421665;
+  padding: 24px;
+`;
+
+const StyledFeatures = styled(Container)`
+  .mantine-Image-root {
+    filter: drop-shadow(3px 3px 5px black);
+
+    img {
+      width: 100%;
+      object-fit: contain;
+    }
+  }
+
+  @media only screen and (max-width: 735px) {
+    .mantine-Image-root {
+      display: none;
     }
   }
 `;
 
-const StyledHeader = styled.h2`
-  font-size: 3rem;
-  color: ${({ theme }) => theme.FULL_WHITE};
-
-  @media only screen and (max-width: 768px) {
-    font-size: 2.2rem;
-  }
-`;
-
-const StyledSubContent = styled.div`
-  margin-bottom: 20px;
-`;
-
-const StyledText = styled.span<{ white?: boolean }>`
-  color: ${({ theme, white }) => (white ? theme.FULL_WHITE : theme.ORANGE)};
-`;
-
-const Home: React.FC = () => {
-  const { push } = useRouter();
-
-  return (
-    <StyledHome>
-      <Head>
-        <title>JSON Visio - Directly onto graphs</title>
-      </Head>
-      <Navbar />
-      <Container>
-        <StyledContent>
-          <StyledHeader as="h1">
-            Visualize your JSON into interactive graphs.
-          </StyledHeader>
-          <StyledSubContent>
-            Simple visualization tool for your JSON data. No forced structure,
-            paste your JSON and view it instantly.
-          </StyledSubContent>
-          <Button status="SECONDARY" onClick={() => push("/editor")}>
-            Start Generating
-          </Button>
-        </StyledContent>
-        <Image src="421.svg" width={500} height={400} alt="graphs" />
-      </Container>
-
-      <Container reverse>
-        <StyledContent>
-          <StyledHeader>No Rules</StyledHeader>
-          <StyledSubContent>
-            Be free, you don&apos;t have to restructure your json to transform
-            it onto graphs. We&apos;ve done it at our side, so you can just
-            paste your JSON.
-          </StyledSubContent>
-          <Button status="SUCCESS" onClick={() => push("/editor")}>
-            Paste It!
-          </Button>
-        </StyledContent>
-        <Image src="graphs3.svg" width={500} height={400} alt="preview" />
-      </Container>
-
-      <Container>
-        <StyledContent>
-          <StyledHeader>Import File</StyledHeader>
-          <StyledSubContent>
-            Have an existing file for your data? No worries, directly import it
-            into our editor without having to scroll through all of it!
-          </StyledSubContent>
-          <Button status="SUCCESS" onClick={() => push("/editor")}>
-            Import JSON
-          </Button>
-        </StyledContent>
-        <Image src="graphs4.svg" width={500} height={400} alt="preview" />
-      </Container>
-
-      <Container reverse>
-        <StyledContent>
-          <StyledHeader>Supported by Open Source</StyledHeader>
-          <StyledSubContent>
-            We do our work at open source. Help us improve by contributing to
-            <StyledText> JSON</StyledText>
-            <StyledText white> Visio</StyledText> at GitHub!
-          </StyledSubContent>
-          <Button
-            onClick={() => push("https://github.com/AykutSarac/jsonvisio.com")}
+const HeroSection = () => (
+  <StyledHeroSection id="hero-section">
+    <Navbar />
+    <StyledHeroSectionBody>
+      <Left>
+        <StyledTitle>
+          <StyledGradientText>JSON</StyledGradientText> CRACK
+        </StyledTitle>
+        <StyledHeroText>
+          Seamlessly visualize your{" "}
+          <StyledHighlightedText>
+            <Typewriter
+              words={["JSON", "YAML", "XML", "TOML", "CSV"]}
+              typeSpeed={100}
+              deleteSpeed={60}
+              delaySpeed={2000}
+              loop
+            />
+          </StyledHighlightedText>{" "}
+          instantly into graphs!
+        </StyledHeroText>
+        <Group spacing="xl">
+          <Link href="/editor" prefetch={false}>
+            <Button fw="bold" rightIcon={<FaChevronRight />} size="lg">
+              GO TO EDITOR
+            </Button>
+          </Link>
+          <Tooltip
+            maw={400}
+            label="VS Code extension only contains JSON visualization without additional features."
+            withArrow
+            multiline
+            position="bottom"
           >
-            <AiFillGithub size={20} />
-            Check GitHub
+            <Anchor
+              href="https://marketplace.visualstudio.com/items?itemName=AykutSarac.jsoncrack-vscode"
+              target="_blank"
+              fw="bold"
+            >
+              <Flex gap="xs" align="center">
+                <SiVisualstudiocode />
+                Get it on VS Code
+              </Flex>
+            </Anchor>
+          </Tooltip>
+        </Group>
+      </Left>
+      <Right>
+        <Image src="/assets/diagram_bg.webp" width="1200" height="593" alt="diagram" />
+      </Right>
+    </StyledHeroSectionBody>
+  </StyledHeroSection>
+);
+
+const StatsBanner = () => (
+  <StyledStatsWrapper>
+    <Group spacing="xl">
+      <Stack spacing="0">
+        <Text fw="bolder" fz="1.6rem">
+          24.5K
+        </Text>
+        <Text color="gray.5" fw="bold" fz="0.8rem">
+          GITHUB STARS
+        </Text>
+      </Stack>
+      <Stack spacing="0">
+        <Text fw="bolder" fz="1.6rem">
+          50K+
+        </Text>
+        <Text color="gray.5" fw="bold" fz="0.8rem">
+          MONTHLY USERS
+        </Text>
+      </Stack>
+      <Stack spacing="0">
+        <Text fw="bolder" fz="1.6rem">
+          GPL-3
+        </Text>
+        <Text color="gray.5" fw="bold" fz="0.8rem">
+          LICENSE
+        </Text>
+      </Stack>
+    </Group>
+    <Stack ml={60}>
+      <Text maw={800} fz="0.9rem">
+        JSON Crack is an open-source project with a GPL-3 license. By subscribing to our premium
+        plan, you can help us continue developing and maintaining it, also enjoy the benefits.
+      </Text>
+      <Link href="/pricing" prefetch={false}>
+        <Text color="yellow" fw="bold" w="fit-content">
+          View Premium Plan <FaChevronRight />
+        </Text>
+      </Link>
+    </Stack>
+  </StyledStatsWrapper>
+);
+
+const Features = () => (
+  <StyledFeatures my={60}>
+    <Flex py="lg" align="flex-start" gap="lg">
+      <Image
+        width={500}
+        height={287}
+        src="/assets/highlight_graph.svg"
+        alt="search through graph"
+      />
+      <Stack pt="lg">
+        <Text color="dark" fz="1.5rem" fw="bold">
+          ADVANCED GRAPH SEARCH
+        </Text>
+        <Text color="dark" maw={500}>
+          Quickly navigate through your data visualization using JSON Crack&apos;s intuitive search
+          functionality. Directly locate specific nodes matching with your search!
+        </Text>
+      </Stack>
+    </Flex>
+    <Flex py="lg" align="center" gap="lg" direction="row-reverse">
+      <Image width={300} height={260} src="/assets/multidata.png" alt="multiple format support" />
+      <Stack>
+        <Text color="dark" fz="1.5rem" fw="bold">
+          DYNAMIC DATA VISUALIZATION
+        </Text>
+        <Text color="dark" maw={500}>
+          JSON Crack revolutionizes data visualization by transforming JSON, YAML, XML, and other
+          data types into captivating, interactive graphs. Gain deep insights into complex data
+          structures at a glance.
+        </Text>
+      </Stack>
+    </Flex>
+    <Flex py="lg" align="center" gap="lg">
+      <Image width={400} height={344} src="/assets/download_image.webp" alt="download as image" />
+      <Stack>
+        <Text color="dark" fz="1.5rem" fw="bold">
+          DOWNLOAD AS IMAGE
+        </Text>
+        <Text color="dark" maw={500}>
+          Capture and share your insights effortlessly by downloading your generated graphs as image
+          files. Easily collaborate and communicate data-driven findings with colleagues and
+          stakeholders.
+        </Text>
+      </Stack>
+    </Flex>
+    <Flex direction="row-reverse" py="lg" align="flex-start" gap="lg">
+      <Image width={500} height={285} src="/assets/preview_image.svg" alt="preview images" />
+      <Stack pt="lg">
+        <Text color="dark" fz="1.5rem" fw="bold">
+          IMAGE PREVIEW
+        </Text>
+        <Text color="dark" maw={500}>
+          Seamlessly preview embedded images within your JSON, YAML, or XML data. Instantly view
+          visuals, photos, and graphics directly within JSON Crack, saving you time and effort.
+        </Text>
+      </Stack>
+    </Flex>
+  </StyledFeatures>
+);
+
+const HeroBottom = () => (
+  <Container mt={100}>
+    <Stack>
+      <Title color="dark" order={3} maw={500} mx="auto" align="center">
+        But that&apos;s not all yet!
+        <br />
+        Explore the full potential of your data now......
+      </Title>
+      <Center>
+        <Link href="/editor" prefetch={false}>
+          <Button color="violet" fw="bold" rightIcon={<FaChevronRight />} size="lg">
+            GO TO EDITOR
           </Button>
-        </StyledContent>
-        <Image src="graphs5.svg" width={500} height={400} alt="preview" />
-      </Container>
-      <Producthunt />
+        </Link>
+      </Center>
+    </Stack>
+  </Container>
+);
+
+export const HomePage = () => {
+  return (
+    <ThemeProvider theme={lightTheme}>
+      <Head>
+        <title>JSON Crack - Crack your data into pieces</title>
+      </Head>
+      <HeroSection />
+      <StatsBanner />
+      <Features />
+      <HeroBottom />
+      <HovercardAds />
       <Footer />
-    </StyledHome>
+    </ThemeProvider>
   );
 };
 
-export default Home;
+export default HomePage;

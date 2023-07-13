@@ -1,54 +1,31 @@
 import React from "react";
-import { Label, Node, NodeProps } from "reaflow";
-import ObjectNode from "./ObjectNode";
-import TextNode from "./TextNode";
+import { Node, NodeProps } from "reaflow";
+import { ObjectNode } from "./ObjectNode";
+import { TextNode } from "./TextNode";
 
-export interface CustomNodeProps<T> {
-  width: number;
-  height: number;
-  value: T;
-  isParent?: boolean;
+export interface CustomNodeProps {
+  node: NodeData;
   x: number;
   y: number;
+  hasCollapse?: boolean;
 }
 
-const baseLabelStyle = {
-  fill: "transparent",
-  stroke: "transparent",
-  strokeWidth: 0,
+const rootProps = {
+  rx: 50,
+  ry: 50,
 };
 
 export const CustomNode = (nodeProps: NodeProps) => {
-  const { properties: data } = nodeProps;
+  const { text, data } = nodeProps.properties;
 
   return (
-    <Node {...nodeProps} label={<Label style={baseLabelStyle} />}>
-      {() => {
-        const { width, height } = nodeProps;
-
-        if (data.text instanceof Object) {
-          const entries = Object.entries<string>(data.text);
-          return (
-            <ObjectNode
-              x={nodeProps.x}
-              y={nodeProps.y}
-              width={width}
-              height={height}
-              value={entries}
-            />
-          );
+    <Node {...nodeProps} {...(data.isEmpty && rootProps)} label={<React.Fragment />}>
+      {({ node, x, y }) => {
+        if (Array.isArray(text)) {
+          return <ObjectNode node={node as NodeData} x={x} y={y} />;
         }
 
-        return (
-          <TextNode
-            isParent={data.data.isParent}
-            width={width}
-            height={height}
-            value={data.text}
-            x={nodeProps.x}
-            y={nodeProps.y}
-          />
-        );
+        return <TextNode node={node as NodeData} hasCollapse={!!data.childrenCount} x={x} y={y} />;
       }}
     </Node>
   );

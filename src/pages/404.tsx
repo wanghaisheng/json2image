@@ -1,9 +1,8 @@
 import React from "react";
 import { useRouter } from "next/router";
 import styled from "styled-components";
-
-import { Button } from "src/components/Button";
-import { Image } from "src/components/Image";
+import { Button, Text, Title } from "@mantine/core";
+import Layout from "src/layout/Layout";
 
 const StyledNotFound = styled.div`
   display: flex;
@@ -17,7 +16,7 @@ const StyledNotFound = styled.div`
 const StyledMessage = styled.h4`
   color: ${({ theme }) => theme.FULL_WHITE};
   font-size: 25px;
-  font-weight: 600;
+  font-weight: 800;
   margin: 10px 0;
 `;
 
@@ -35,18 +34,18 @@ const NotFound: React.FC = () => {
   const router = useRouter();
 
   return (
-    <StyledNotFound>
-      <StyledImageWrapper>
-        <Image src="/404.svg" alt="404" width={300} height={400} />
-      </StyledImageWrapper>
-      <StyledMessage>WIZARDS BEHIND CURTAINS?</StyledMessage>
-      <StyledSubMessage>
-        Looks like you&apos;re lost, let&apos;s head back to the home!
-      </StyledSubMessage>
-      <Button type="button" onClick={() => router.push("/")}>
-        Go Home
-      </Button>
-    </StyledNotFound>
+    <Layout>
+      <StyledNotFound>
+        <StyledImageWrapper>
+          <img src="/assets/404.svg" alt="not found" width={300} height={400} />
+        </StyledImageWrapper>
+        <Title color="dark">WIZARDS BEHIND CURTAINS?</Title>
+        <Text color="dark">Looks like you&apos;re lost, let&apos;s head back to the home!</Text>
+        <Button mt="lg" size="lg" type="button" onClick={() => router.push("/")}>
+          Go Home
+        </Button>
+      </StyledNotFound>
+    </Layout>
   );
 };
 

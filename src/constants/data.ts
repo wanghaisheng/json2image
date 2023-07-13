@@ -1,7 +1,8 @@
-import { StorageConfig } from "src/typings/global";
+export const baseURL = process.env.NEXT_PUBLIC_BASE_URL as string;
+export const paymentURL = process.env.NEXT_PUBLIC_PAYMENT_URL as string;
 
 // Example taken from https://mdn.github.io/learning-area/javascript/oojs/json/superheroes.json
-export const defaultJson = {
+const sampleJson = Object.freeze({
   squadName: "Super hero squad",
   homeTown: "Metro City",
   formed: 2016,
@@ -18,11 +19,7 @@ export const defaultJson = {
       name: "Madame Uppercut",
       age: 39,
       secretIdentity: "Jane Wilson",
-      powers: [
-        "Million tonne punch",
-        "Damage resistance",
-        "Superhuman reflexes",
-      ],
+      powers: ["Million tonne punch", "Damage resistance", "Superhuman reflexes"],
     },
     {
       name: "Eternal Flame",
@@ -37,12 +34,6 @@ export const defaultJson = {
       ],
     },
   ],
-};
+});
 
-export const defaultConfig: StorageConfig = {
-  layout: "RIGHT",
-  expand: true,
-  hideEditor: false,
-  zoomPanPinch: null,
-  lightmode: false,
-};
+export const defaultJson = JSON.stringify(sampleJson, null, 2);
