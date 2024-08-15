@@ -1,118 +1,65 @@
 import React from "react";
-import styled from "styled-components";
-import { Modal, Group, Button, Badge, Avatar, Grid, Divider, ModalProps } from "@mantine/core";
+import type { ModalProps } from "@mantine/core";
+import { Modal, Group, Button, Avatar, Text, Divider, Paper, Badge } from "@mantine/core";
 import { IoRocketSharp } from "react-icons/io5";
+import { gaEvent } from "src/lib/utils/gaEvent";
 import useModal from "src/store/useModal";
 import useUser from "src/store/useUser";
 
-const StyledTitle = styled.div`
-  display: flex;
-  align-items: center;
-  color: ${({ theme }) => theme.TEXT_POSITIVE};
-  flex: 1;
-  font-weight: 700;
-
-  &::after {
-    background: ${({ theme }) => theme.TEXT_POSITIVE};
-    height: 1px;
-
-    content: "";
-    -webkit-box-flex: 1;
-    -ms-flex: 1 1 auto;
-    flex: 1 1 auto;
-    margin-left: 4px;
-    opacity: 0.6;
-  }
-`;
-
-const StyledContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 0;
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.INTERACTIVE_NORMAL};
-
-  & > div {
-    font-weight: 400;
-    font-size: 14px;
-    color: ${({ theme }) => theme.INTERACTIVE_ACTIVE};
-  }
-`;
-
-export const AccountModal: React.FC<ModalProps> = ({ opened, onClose }) => {
-  const setVisible = useModal(state => state.setVisible);
+export const AccountModal = ({ opened, onClose }: ModalProps) => {
   const user = useUser(state => state.user);
-  const isPremium = useUser(state => state.premium);
+  const setVisible = useModal(state => state.setVisible);
   const logout = useUser(state => state.logout);
 
+  const username =
+    user?.user_metadata.full_name || user?.user_metadata.display_name || user?.user_metadata.name;
+
   return (
-    <Modal title="Account" opened={opened} onClose={onClose} centered>
-      <StyledTitle>Hello, {user?.name}!</StyledTitle>
-      <Group py="sm">
-        <Grid gutter="xs">
-          <Grid.Col span={2}>
-            <Avatar size="lg" radius="lg" src={user?.profilePicture} alt={user?.name} />
-          </Grid.Col>
-          <Grid.Col span={4}>
-            <StyledContainer>
-              USERNAME
-              <div>{user?.name}</div>
-            </StyledContainer>
-          </Grid.Col>
-          <Grid.Col span={6}>
-            <StyledContainer>
-              ACCOUNT STATUS
-              <div>
-                {isPremium ? (
-                  <Badge color="orange">Premium</Badge>
-                ) : (
-                  <Badge variant="outline" color="gray">
-                    Free
-                  </Badge>
-                )}
-              </div>
-            </StyledContainer>
-          </Grid.Col>
-          <Grid.Col span={6}>
-            <StyledContainer>
-              EMAIL
-              <div>{user?.email}</div>
-            </StyledContainer>
-          </Grid.Col>
-          <Grid.Col span={4}>
-            <StyledContainer>
-              REGISTRATION
-              <div>{user?.signUpAt && new Date(user.signUpAt).toDateString()}</div>
-            </StyledContainer>
-          </Grid.Col>
-        </Grid>
-      </Group>
+    <Modal title={`Hello, ${username}!`} opened={opened} onClose={onClose} centered>
+      <Paper p="md">
+        <Group>
+          <Avatar src={user?.user_metadata.avatar_url} size={94}>
+            JC
+          </Avatar>
+          <div>
+            <Text fz="lg" tt="uppercase" fw={700}>
+              {username}
+            </Text>
+
+            <Group gap={10} mt={3}>
+              <Text fz="xs" c="dimmed">
+                {user?.email}
+              </Text>
+            </Group>
+
+            <Group gap={10} mt={5}>
+              <Text fz="xs" c="dimmed">
+                <Badge
+                  size="sm"
+                  variant="dot"
+                  color="dark"
+                  gradient={{ from: "#8800fe", to: "#ff00cc", deg: 35 }}
+                >
+                  Free
+                </Badge>
+              </Text>
+            </Group>
+          </div>
+        </Group>
+      </Paper>
+
       <Divider py="xs" />
-      <Group position="right">
-        {isPremium ? (
-          <Button
-            variant="light"
-            color="red"
-            onClick={() => {
-              setVisible("cancelPremium")(true);
-              onClose();
-            }}
-          >
-            Cancel Subscription
-          </Button>
-        ) : (
-          <Button
-            variant="gradient"
-            gradient={{ from: "teal", to: "lime", deg: 105 }}
-            leftIcon={<IoRocketSharp />}
-            onClick={() => setVisible("premium")(true)}
-          >
-            UPGRADE TO PREMIUM!
-          </Button>
-        )}
+      <Group justify="right">
+        <Button
+          variant="default"
+          leftSection={<IoRocketSharp />}
+          onClick={() => {
+            setVisible("upgrade")(true);
+            gaEvent("Account Modal", "click upgrade premium");
+          }}
+        >
+          Upgrade to Premium
+        </Button>
         <Button
           color="red"
           onClick={() => {

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { Modal } from "src/containers/Modals";
+import type { Modal } from "src/containers/Modals";
 import useUser from "./useUser";
 
 type ModalState = {
@@ -17,17 +17,17 @@ const initialStates: ModalState = {
   import: false,
   account: false,
   node: false,
-  settings: false,
   share: false,
   login: false,
-  premium: false,
+  upgrade: false,
   jwt: false,
   schema: false,
-  cancelPremium: false,
+  review: false,
+  jq: false,
+  type: false,
 };
 
-const authModals: Modal[] = ["cloud", "share", "account", "schema"];
-const premiumModals: Modal[] = ["schema"];
+const authModals: Modal[] = ["cloud", "account"];
 
 const useModal = create<ModalState & ModalActions>()(set => ({
   ...initialStates,
@@ -36,8 +36,6 @@ const useModal = create<ModalState & ModalActions>()(set => ({
 
     if (authModals.includes(modal) && !user.isAuthenticated) {
       return set({ login: true });
-    } else if (premiumModals.includes(modal) && !user.premium) {
-      return set({ premium: true });
     }
 
     set({ [modal]: visible });

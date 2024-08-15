@@ -1,48 +1,50 @@
 import debounce from "lodash.debounce";
-import _get from "lodash.get";
-import _set from "lodash.set";
 import { toast } from "react-hot-toast";
 import { create } from "zustand";
 import { defaultJson } from "src/constants/data";
-import { FileFormat } from "src/constants/file";
-import { getFromCloud, saveToCloud } from "src/services/json";
-import { contentToJson, jsonToContent } from "src/utils/json/jsonAdapter";
-import useGraph from "./useGraph";
+import { FileFormat } from "src/enums/file.enum";
+import { contentToJson, jsonToContent } from "src/lib/utils/jsonAdapter";
+import { isIframe } from "src/lib/utils/widget";
+import { documentSvc } from "src/services/document.service";
+import useGraph from "../modules/GraphView/stores/useGraph";
+import useConfig from "./useConfig";
 import useJson from "./useJson";
-import useStored from "./useStored";
-import useUser from "./useUser";
 
 type SetContents = {
   contents?: string;
   hasChanges?: boolean;
   skipUpdate?: boolean;
+  format?: FileFormat;
 };
+
+type Query = string | string[] | undefined;
 
 interface JsonActions {
   getContents: () => string;
   getFormat: () => FileFormat;
   getHasChanges: () => boolean;
-  setError: (error: object | null) => void;
+  setError: (error: string | null) => void;
   setHasChanges: (hasChanges: boolean) => void;
   setContents: (data: SetContents) => void;
-  saveToCloud: (isNew?: boolean) => void;
   fetchFile: (fileId: string) => void;
   fetchUrl: (url: string) => void;
-  editContents: (path: string, value: string, callback?: () => void) => void;
   setFormat: (format: FileFormat) => void;
   clear: () => void;
   setFile: (fileData: File) => void;
   setJsonSchema: (jsonSchema: object | null) => void;
+  checkEditorSession: (url: Query, widget?: boolean) => void;
 }
 
 export type File = {
-  _id: string;
+  id: string;
+  views: number;
+  owner_email: string;
   name: string;
-  json: string;
+  content: string;
   private: boolean;
-  format?: FileFormat;
-  createdAt: string;
-  updatedAt: string;
+  format: FileFormat;
+  created_at: string;
+  updated_at: string;
 };
 
 const initialStates = {
@@ -62,36 +64,21 @@ const isURL = (value: string) => {
   );
 };
 
-const debouncedUpdateJson = debounce(
-  (value: unknown) => useJson.getState().setJson(JSON.stringify(value, null, 2)),
-  800
-);
+const debouncedUpdateJson = debounce((value: unknown) => {
+  useGraph.getState().setLoading(true);
+  useJson.getState().setJson(JSON.stringify(value, null, 2));
+}, 800);
 
-const filterArrayAndObjectFields = (obj: object) => {
-  const result = {};
-
-  for (let key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      if (Array.isArray(obj[key]) || typeof obj[key] === "object") {
-        result[key] = obj[key];
-      }
-    }
-  }
-
-  return result;
-};
 const useFile = create<FileStates & JsonActions>()((set, get) => ({
   ...initialStates,
   clear: () => {
     set({ contents: "" });
     useJson.getState().clear();
   },
-  setJsonSchema: jsonSchema => {
-    if (useUser.getState().premium) set({ jsonSchema });
-  },
+  setJsonSchema: jsonSchema => set({ jsonSchema }),
   setFile: fileData => {
     set({ fileData, format: fileData.format || FileFormat.JSON });
-    get().setContents({ contents: fileData.json, hasChanges: false });
+    get().setContents({ contents: fileData.content, hasChanges: false });
   },
   getContents: () => get().contents,
   getFormat: () => get().format,
@@ -99,53 +86,47 @@ const useFile = create<FileStates & JsonActions>()((set, get) => ({
   setFormat: async format => {
     try {
       const prevFormat = get().format;
+
       set({ format });
       const contentJson = await contentToJson(get().contents, prevFormat);
       const jsonContent = await jsonToContent(JSON.stringify(contentJson, null, 2), format);
-      get().setContents({ contents: jsonContent, hasChanges: false });
+
+      get().setContents({ contents: jsonContent });
     } catch (error) {
       get().clear();
-      console.info("The content was unable to be converted, so it was cleared instead.");
+      console.warn("The content was unable to be converted, so it was cleared instead.");
     }
   },
-  setContents: async ({ contents, hasChanges = true, skipUpdate = false }) => {
+  setContents: async ({ contents, hasChanges = true, skipUpdate = false, format }) => {
     try {
-      set({ ...(contents && { contents }), error: null, hasChanges });
+      set({
+        ...(contents && { contents }),
+        error: null,
+        hasChanges,
+        format: format ?? get().format,
+      });
+
+      const isFetchURL = window.location.href.includes("?");
       const json = await contentToJson(get().contents, get().format);
-      if (!useStored.getState().liveTransform && skipUpdate) return;
+
+      if (!useConfig.getState().liveTransformEnabled && skipUpdate) return;
+
+      if (get().hasChanges && contents && contents.length < 80_000 && !isIframe() && !isFetchURL) {
+        sessionStorage.setItem("content", contents);
+        sessionStorage.setItem("format", get().format);
+        set({ hasChanges: true });
+      }
 
       debouncedUpdateJson(json);
     } catch (error: any) {
       if (error?.mark?.snippet) return set({ error: error.mark.snippet });
       if (error?.message) set({ error: error.message });
+      useJson.setState({ loading: false });
+      useGraph.setState({ loading: false });
     }
   },
   setError: error => set({ error }),
   setHasChanges: hasChanges => set({ hasChanges }),
-  saveToCloud: async (isNew = true) => {
-    try {
-      const url = new URL(window.location.href);
-      const params = new URLSearchParams(url.search);
-      const jsonQuery = params.get("doc");
-
-      toast.loading("Saving File...", { id: "fileSave" });
-      const res = await saveToCloud(isNew ? null : jsonQuery, get().contents, get().format);
-
-      if (res.errors && res.errors.items.length > 0) throw res.errors;
-
-      toast.success("File saved to cloud", { id: "fileSave" });
-      set({ hasChanges: false });
-      return res.data._id;
-    } catch (error: any) {
-      if (error?.items?.length > 0) {
-        toast.error(error.items[0].message, { id: "fileSave", duration: 5000 });
-        return undefined;
-      }
-
-      toast.error("Failed to save File!", { id: "fileSave" });
-      return undefined;
-    }
-  },
   fetchUrl: async url => {
     try {
       const res = await fetch(url);
@@ -159,46 +140,30 @@ const useFile = create<FileStates & JsonActions>()((set, get) => ({
       toast.error("Failed to fetch document from URL!");
     }
   },
+  checkEditorSession: (url, widget) => {
+    if (url && typeof url === "string") {
+      if (isURL(url)) return get().fetchUrl(url);
+      return get().fetchFile(url);
+    }
+
+    let contents = defaultJson;
+    const sessionContent = sessionStorage.getItem("content") as string | null;
+    const format = sessionStorage.getItem("format") as FileFormat | null;
+    if (sessionContent && !widget) contents = sessionContent;
+
+    if (format) set({ format });
+    get().setContents({ contents, hasChanges: false });
+  },
   fetchFile: async id => {
     try {
-      if (isURL(id)) return get().fetchUrl(id);
+      const { data, error } = await documentSvc.getById(id);
+      if (error) throw error;
 
-      const file = await getFromCloud(id);
-      get().setFile(file);
-    } catch (error) {
-      useJson.setState({ loading: false });
-      useGraph.setState({ loading: false });
-      console.error(error);
-    }
-  },
-  editContents: async (path, value, callback) => {
-    try {
-      if (!value) return;
-
-      let tempValue = value;
-      const pathJson = _get(JSON.parse(useJson.getState().json), path.replace("{Root}.", ""));
-      const changedValue = JSON.parse(value);
-
-      if (typeof changedValue !== "string") {
-        tempValue = {
-          ...filterArrayAndObjectFields(pathJson),
-          ...changedValue,
-        };
-      } else {
-        tempValue = tempValue.replaceAll('"', "");
-      }
-
-      const newJson = _set(
-        JSON.parse(useJson.getState().json),
-        path.replace("{Root}.", ""),
-        tempValue
-      );
-
-      const contents = await jsonToContent(JSON.stringify(newJson, null, 2), get().format);
-      get().setContents({ contents });
-      if (callback) callback();
-    } catch (error) {
-      toast.error("Invalid Property!");
+      if (data?.length) get().setFile(data[0]);
+      if (data?.length === 0) throw new Error("Document not found");
+    } catch (error: any) {
+      if (error?.message) toast.error(error?.message);
+      get().setContents({ contents: defaultJson, hasChanges: false });
     }
   },
 }));
